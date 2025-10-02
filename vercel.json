@@ -1,8 +1,7 @@
 {
   "version": 2,
-  "functions": {
-    "api/messages.js": {
-      "runtime": "nodejs18.x"
-    }
-  }
+  "builds": [
+    { "src": "index.html", "use": "@vercel/static" },
+    { "src": "api/**/*.js", "use": "@vercel/node" }
+  ]
 }
