@@ -1,47 +1,442 @@
 <!DOCTYPE html>
-<html>
+<html lang="id">
 <head>
-  <meta charset="UTF-8">
-  <title>Chat DB Demo</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Chat App</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: #4f46e5;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .chat-container {
+            display: flex;
+            height: 600px;
+        }
+
+        .sidebar {
+            width: 250px;
+            background: #f8fafc;
+            border-right: 1px solid #e2e8f0;
+            padding: 20px;
+        }
+
+        .chat-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: #f8fafc;
+        }
+
+        .message {
+            background: white;
+            padding: 12px 16px;
+            border-radius: 12px;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            border: 1px solid #e2e8f0;
+        }
+
+        .message-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 5px;
+        }
+
+        .username {
+            font-weight: bold;
+            color: #4f46e5;
+        }
+
+        .timestamp {
+            font-size: 0.8em;
+            color: #64748b;
+        }
+
+        .message-text {
+            color: #334155;
+        }
+
+        .message-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 8px;
+        }
+
+        .btn {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8em;
+            transition: all 0.2s;
+        }
+
+        .btn-like {
+            background: #f1f5f9;
+            color: #64748b;
+        }
+
+        .btn-like:hover {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+
+        .btn-edit {
+            background: #f1f5f9;
+            color: #64748b;
+        }
+
+        .btn-edit:hover {
+            background: #dbeafe;
+            color: #2563eb;
+        }
+
+        .input-area {
+            padding: 20px;
+            background: white;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        input, textarea {
+            flex: 1;
+            padding: 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            font-size: 14px;
+            resize: none;
+        }
+
+        textarea {
+            height: 60px;
+        }
+
+        .btn-send {
+            background: #4f46e5;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .btn-send:hover {
+            background: #4338ca;
+        }
+
+        .profile-section {
+            margin-bottom: 20px;
+        }
+
+        .profile-input {
+            width: 100%;
+            margin-bottom: 10px;
+        }
+
+        .online-users {
+            margin-top: 20px;
+        }
+
+        .user-item {
+            padding: 8px;
+            background: white;
+            margin-bottom: 5px;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .likes-count {
+            font-size: 0.8em;
+            color: #dc2626;
+            margin-left: 5px;
+        }
+
+        .edited-badge {
+            font-size: 0.7em;
+            color: #64748b;
+            font-style: italic;
+            margin-left: 5px;
+        }
+    </style>
 </head>
 <body>
-  <h1>Chat Demo (DB)</h1>
-  <input id="user" placeholder="Nama kamu">
-  <input id="msgInput" placeholder="Tulis pesan...">
-  <button onclick="send()">Kirim</button>
-  <div id="chat"></div>
+    <div class="container">
+        <div class="header">
+            <h1>My Chat App</h1>
+            <p>Media Sosial Sederhana</p>
+        </div>
 
-  <script>
-    async function load() {
-      try {
-        let res = await fetch('/api/messages');
-        let data = await res.json();
-        document.getElementById('chat').innerHTML = data
-          .map(m => `<p><b>${m.user_name}:</b> ${m.message}</p>`)
-          .join('');
-      } catch (e) {
-        console.error("Error load:", e);
-      }
-    }
+        <div class="chat-container">
+            <div class="sidebar">
+                <div class="profile-section">
+                    <h3>Profile Saya</h3>
+                    <input type="text" id="usernameInput" placeholder="Username Anda" class="profile-input">
+                    <button onclick="updateProfile()" class="btn btn-send" style="width: 100%">Update Profile</button>
+                </div>
+                
+                <div class="online-users">
+                    <h3>Pengguna Online</h3>
+                    <div id="usersList"></div>
+                </div>
+            </div>
 
-    async function send() {
-      let user = document.getElementById('user').value || "Anon";
-      let msg = document.getElementById('msgInput').value;
+            <div class="chat-area">
+                <div class="messages" id="messagesContainer">
+                    <!-- Pesan akan dimuat di sini -->
+                </div>
+                
+                <div class="input-area">
+                    <div class="input-group">
+                        <textarea id="messageInput" placeholder="Ketik pesan Anda..."></textarea>
+                        <button onclick="sendMessage()" class="btn-send">Kirim</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-      if (!msg.trim()) return;
+    <script>
+        // Generate unique user ID
+        const userId = 'user_' + Math.random().toString(36).substr(2, 9);
+        let currentUsername = '';
 
-      await fetch('/api/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ user, msg })
-      });
+        // Load messages on page load
+        document.addEventListener('DOMContentLoaded', loadMessages);
 
-      document.getElementById('msgInput').value = '';
-      load();
-    }
+        // Auto refresh messages every 3 seconds
+        setInterval(loadMessages, 3000);
 
-    load();
-    setInterval(load, 3000); // auto-refresh setiap 3 detik
-  </script>
+        async function loadMessages() {
+            try {
+                const response = await fetch('/api/messages');
+                const result = await response.json();
+                
+                if (result.success) {
+                    displayMessages(result.data);
+                    displayUsers(result.users);
+                }
+            } catch (error) {
+                console.error('Error loading messages:', error);
+            }
+        }
+
+        function displayMessages(messages) {
+            const container = document.getElementById('messagesContainer');
+            container.innerHTML = '';
+
+            messages.forEach(msg => {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = 'message';
+                
+                messageDiv.innerHTML = `
+                    <div class="message-header">
+                        <span class="username">${msg.username}</span>
+                        <span class="timestamp">${new Date(msg.timestamp).toLocaleTimeString()}</span>
+                    </div>
+                    <div class="message-text">${msg.text}</div>
+                    ${msg.edited ? '<span class="edited-badge">(diedit)</span>' : ''}
+                    <div class="message-actions">
+                        <button onclick="likeMessage('${msg.id}')" class="btn btn-like">
+                            ❤️ Like <span class="likes-count">${msg.likes || 0}</span>
+                        </button>
+                        ${msg.userId === userId ? `
+                            <button onclick="editMessage('${msg.id}')" class="btn btn-edit">Edit</button>
+                        ` : ''}
+                    </div>
+                `;
+                
+                container.appendChild(messageDiv);
+            });
+
+            // Scroll to bottom
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function displayUsers(users) {
+            const usersList = document.getElementById('usersList');
+            usersList.innerHTML = '';
+
+            Object.values(users).forEach(user => {
+                const userDiv = document.createElement('div');
+                userDiv.className = 'user-item';
+                userDiv.textContent = user.username;
+                usersList.appendChild(userDiv);
+            });
+        }
+
+        async function sendMessage() {
+            const messageInput = document.getElementById('messageInput');
+            const usernameInput = document.getElementById('usernameInput');
+            
+            const text = messageInput.value.trim();
+            const username = usernameInput.value.trim() || 'Anonymous';
+
+            if (!text) {
+                alert('Silakan ketik pesan!');
+                return;
+            }
+
+            if (!currentUsername && usernameInput.value.trim()) {
+                currentUsername = usernameInput.value.trim();
+            }
+
+            try {
+                const response = await fetch('/api/messages', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        text,
+                        username: currentUsername || username,
+                        userId
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    messageInput.value = '';
+                    loadMessages(); // Reload messages
+                } else {
+                    alert('Gagal mengirim pesan: ' + result.message);
+                }
+            } catch (error) {
+                console.error('Error sending message:', error);
+                alert('Error mengirim pesan');
+            }
+        }
+
+        async function updateProfile() {
+            const usernameInput = document.getElementById('usernameInput');
+            const newUsername = usernameInput.value.trim();
+
+            if (!newUsername) {
+                alert('Silakan isi username!');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/messages', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        action: 'updateProfile',
+                        userId,
+                        newUsername
+                    })
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    currentUsername = newUsername;
+                    alert('Profile berhasil diupdate!');
+                    loadMessages(); // Reload untuk update username di pesan
+                }
+            } catch (error) {
+                console.error('Error updating profile:', error);
+            }
+        }
+
+        async function likeMessage(messageId) {
+            try {
+                const response = await fetch('/api/messages', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        action: 'like',
+                        messageId
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    loadMessages(); // Reload untuk update like count
+                }
+            } catch (error) {
+                console.error('Error liking message:', error);
+            }
+        }
+
+        async function editMessage(messageId) {
+            const newText = prompt('Edit pesan Anda:');
+            
+            if (newText && newText.trim()) {
+                try {
+                    const response = await fetch('/api/messages', {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            action: 'editMessage',
+                            messageId,
+                            newText: newText.trim()
+                        })
+                    });
+
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        loadMessages(); // Reload messages
+                    }
+                } catch (error) {
+                    console.error('Error editing message:', error);
+                }
+            }
+        }
+
+        // Send message on Enter key (but allow Shift+Enter for new line)
+        document.getElementById('messageInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+        });
+    </script>
 </body>
-</html>
+  </html>
