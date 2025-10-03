@@ -1,60 +1,47 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Global Chat</title>
-  <style>
-    body { font-family:sans-serif; margin:0; padding:0; background:#f0f2f5; }
-    header { background:#4267B2; color:white; padding:10px; text-align:center; }
-    #messages { padding:10px; height:70vh; overflow-y:auto; background:#fff; }
-    .msg { margin:5px 0; padding:8px; border-radius:10px; max-width:70%; }
-    .me { background:#DCF8C6; margin-left:auto; }
-    .other { background:#eee; margin-right:auto; }
-    .input-area { display:flex; gap:5px; padding:10px; background:#fff; }
-    input { flex:1; padding:8px; border:1px solid #ccc; border-radius:5px; }
-    button { padding:8px 12px; background:#4267B2; color:white; border:none; border-radius:5px; cursor:pointer; }
-  </style>
+  <meta charset="UTF-8">
+  <title>Chat DB Demo</title>
 </head>
 <body>
-  <header>🌐 Chat Global Demo</header>
-  <div id="messages"></div>
-  <div class="input-area">
-    <input id="username" placeholder="Username" style="max-width:120px"/>
-    <input id="msg" placeholder="Type message..."/>
-    <button onclick="sendMessage()">Send</button>
-  </div>
+  <h1>Chat Demo (DB)</h1>
+  <input id="user" placeholder="Nama kamu">
+  <input id="msgInput" placeholder="Tulis pesan...">
+  <button onclick="send()">Kirim</button>
+  <div id="chat"></div>
 
-<script>
-async function loadMessages(){
-  const res = await fetch('/api/messages');
-  const data = await res.json();
-  const messagesDiv = document.getElementById('messages');
-  messagesDiv.innerHTML = "";
-  data.forEach(m=>{
-    const div = document.createElement('div');
-    div.className = "msg " + (m.user===document.getElementById('username').value?"me":"other");
-    div.innerHTML = `<b>${m.user}</b>: ${m.text}`;
-    messagesDiv.appendChild(div);
-  });
-  messagesDiv.scrollTop = messagesDiv.scrollHeight;
-}
+  <script>
+    async function load() {
+      try {
+        let res = await fetch('/api/messages');
+        let data = await res.json();
+        document.getElementById('chat').innerHTML = data
+          .map(m => `<p><b>${m.user_name}:</b> ${m.message}</p>`)
+          .join('');
+      } catch (e) {
+        console.error("Error load:", e);
+      }
+    }
 
-async function sendMessage(){
-  const user = document.getElementById('username').value || "Anon";
-  const text = document.getElementById('msg').value;
-  if(!text) return;
-  await fetch('/api/messages',{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({user,text})
-  });
-  document.getElementById('msg').value="";
-  loadMessages();
-}
+    async function send() {
+      let user = document.getElementById('user').value || "Anon";
+      let msg = document.getElementById('msgInput').value;
 
-setInterval(loadMessages, 2000); // auto refresh tiap 2 detik
-loadMessages();
-</script>
+      if (!msg.trim()) return;
+
+      await fetch('/api/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ user, msg })
+      });
+
+      document.getElementById('msgInput').value = '';
+      load();
+    }
+
+    load();
+    setInterval(load, 3000); // auto-refresh setiap 3 detik
+  </script>
 </body>
-  </html>
+</html>
