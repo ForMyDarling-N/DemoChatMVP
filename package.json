@@ -1,7 +1,6 @@
 {
-  "name": "chat-demo-db",
+  "name": "my-chat-app",
   "version": "1.0.0",
-  "dependencies": {
-    "@vercel/postgres": "latest"
-  }
+  "description": "Simple Social Media Chat App",
+  "type": "module"
 }
