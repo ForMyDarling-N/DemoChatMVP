@@ -1,19 +1,24 @@
-import { kv } from "@vercel/kv";
+import { getDB } from '../db/index.js';
 
 export default async function handler(req, res) {
-  if (req.method === "GET") {
-    const messages = (await kv.get("messages")) || [];
-    res.json(messages);
+  const db = getDB();
+
+  if (req.method === 'GET') {
+    const { rows } = await db.query('SELECT * FROM messages ORDER BY id DESC LIMIT 50');
+    res.status(200).json(rows);
   } 
-  else if (req.method === "POST") {
-    const { user, text } = req.body;
-    let messages = (await kv.get("messages")) || [];
-    messages.push({ user, text, time: Date.now() });
-    if (messages.length > 50) messages = messages.slice(-50); // simpan max 50 pesan
-    await kv.set("messages", messages);
-    res.json({ ok: true });
+  else if (req.method === 'POST') {
+    const { msg, user } = req.body;
+    if (!msg) return res.status(400).json({ error: "Message required" });
+
+    await db.query(
+      'INSERT INTO messages (user_name, message) VALUES ($1, $2)',
+      [user || 'Anon', msg]
+    );
+
+    res.status(200).json({ ok: true });
   } 
   else {
     res.status(405).end();
   }
-}
+      }
