@@ -1,11 +1,7 @@
 {
-  "name": "global-chat",
+  "name": "chat-demo-db",
   "version": "1.0.0",
-  "main": "index.html",
-  "scripts": {
-    "start": "vercel dev"
-  },
   "dependencies": {
-    "@vercel/kv": "latest"
+    "@vercel/postgres": "latest"
   }
 }
