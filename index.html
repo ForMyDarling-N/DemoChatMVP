@@ -1,109 +1,102 @@
 <!DOCTYPE html>
-<html lang="id">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Chat App</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        body { font-family: Arial; margin: 20px; background: #f0f0f0; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; }
+        .message { background: #e3f2fd; padding: 10px; margin: 10px 0; border-radius: 5px; }
+        input, textarea { width: 100%; padding: 10px; margin: 5px 0; }
+        button { background: #2196F3; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>My Chat App</h1>
+        
+        <div>
+            <input type="text" id="username" placeholder="Your username">
+            <button onclick="updateProfile()">Set Profile</button>
+        </div>
+
+        <div id="messages"></div>
+
+        <div>
+            <textarea id="messageInput" placeholder="Type your message..." rows="3"></textarea>
+            <button onclick="sendMessage()">Send Message</button>
+        </div>
+    </div>
+
+    <script>
+        const userId = 'user_' + Math.random().toString(36).substr(2, 9);
+        
+        async function loadMessages() {
+            try {
+                const response = await fetch('/api/messages');
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('messages').innerHTML = data.data.map(msg => `
+                        <div class="message">
+                            <strong>${msg.username}</strong>: ${msg.text}
+                            <br><small>${new Date(msg.timestamp).toLocaleTimeString()} 
+                            ${msg.likes ? `❤️ ${msg.likes}` : ''}</small>
+                            <button onclick="likeMessage('${msg.id}')">Like</button>
+                        </div>
+                    `).join('');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
         }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
+        async function sendMessage() {
+            const text = document.getElementById('messageInput').value;
+            const username = document.getElementById('username').value || 'Anonymous';
+            
+            if (!text) return;
+
+            try {
+                await fetch('/api/messages', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ text, username, userId })
+                });
+                
+                document.getElementById('messageInput').value = '';
+                loadMessages();
+            } catch (error) {
+                console.error('Error:', error);
+            }
         }
 
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-            overflow: hidden;
+        async function likeMessage(messageId) {
+            await fetch('/api/messages', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'like', messageId })
+            });
+            loadMessages();
         }
 
-        .header {
-            background: #4f46e5;
-            color: white;
-            padding: 20px;
-            text-align: center;
+        async function updateProfile() {
+            const newUsername = document.getElementById('username').value;
+            if (!newUsername) return;
+            
+            await fetch('/api/messages', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'updateProfile', userId, newUsername })
+            });
+            loadMessages();
         }
 
-        .chat-container {
-            display: flex;
-            height: 600px;
-        }
-
-        .sidebar {
-            width: 250px;
-            background: #f8fafc;
-            border-right: 1px solid #e2e8f0;
-            padding: 20px;
-        }
-
-        .chat-area {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-        }
-
-        .messages {
-            flex: 1;
-            padding: 20px;
-            overflow-y: auto;
-            background: #f8fafc;
-        }
-
-        .message {
-            background: white;
-            padding: 12px 16px;
-            border-radius: 12px;
-            margin-bottom: 10px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-            border: 1px solid #e2e8f0;
-        }
-
-        .message-header {
-            display: flex;
-            justify-content: between;
-            align-items: center;
-            margin-bottom: 5px;
-        }
-
-        .username {
-            font-weight: bold;
-            color: #4f46e5;
-        }
-
-        .timestamp {
-            font-size: 0.8em;
-            color: #64748b;
-        }
-
-        .message-text {
-            color: #334155;
-        }
-
-        .message-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 8px;
-        }
-
-        .btn {
-            padding: 6px 12px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.8em;
-            transition: all 0.2s;
-        }
-
+        // Load messages every 2 seconds
+        loadMessages();
+        setInterval(loadMessages, 2000);
+    </script>
+</body>
+</html>
         .btn-like {
             background: #f1f5f9;
             color: #64748b;
